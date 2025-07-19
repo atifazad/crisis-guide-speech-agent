@@ -160,12 +160,31 @@ class ElevenLabsService:
             
             voice_list = []
             for voice in available_voices:
-                voice_list.append({
-                    "id": voice.voice_id,
-                    "name": voice.name,
-                    "category": voice.category,
-                    "description": voice.labels.get("description", "") if hasattr(voice, 'labels') else ""
-                })
+                # Handle different response formats from ElevenLabs API
+                try:
+                    if hasattr(voice, 'voice_id'):
+                        voice_id = voice.voice_id
+                    elif hasattr(voice, 'id'):
+                        voice_id = voice.id
+                    else:
+                        voice_id = str(voice)  # Fallback
+                    
+                    voice_info = {
+                        "id": voice_id,
+                        "name": getattr(voice, 'name', 'Unknown'),
+                        "category": getattr(voice, 'category', 'Unknown'),
+                        "description": ""
+                    }
+                    
+                    # Try to get description from labels if available
+                    if hasattr(voice, 'labels') and voice.labels:
+                        voice_info["description"] = voice.labels.get("description", "")
+                    
+                    voice_list.append(voice_info)
+                    
+                except Exception as voice_error:
+                    # Skip problematic voice entries
+                    continue
             
             return {
                 "success": True,

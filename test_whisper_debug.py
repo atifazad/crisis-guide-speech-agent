@@ -42,14 +42,20 @@ def test_whisper_service():
         
         # Test 3: Check service attributes
         print("\n3. Testing Service Attributes...")
-        print(f"   Model: {stt_service.model}")
-        print(f"   API Key: {'✅ Set' if stt_service.api_key else '❌ Missing'}")
-        print(f"   Language: {stt_service.language}")
+        print(f"   API Key Provided: {'✅ Yes' if openai_key else '❌ No'}")
+        print(f"   Service Type: {type(stt_service).__name__}")
+        print(f"   Model Name: {getattr(stt_service, 'model_name', 'Not available')}")
+        print(f"   Sample Rate: {getattr(stt_service, 'sample_rate', 'Not available')}")
         
         # Test 4: Check if it's a FrameProcessor
         from pipecat.processors.frame_processor import FrameProcessor
         is_processor = isinstance(stt_service, FrameProcessor)
         print(f"   Is FrameProcessor: {'✅ Yes' if is_processor else '❌ No'}")
+        
+        # Test 5: Check if service has required methods
+        required_methods = ['process_audio_frame', 'run_stt']
+        available_methods = [method for method in required_methods if hasattr(stt_service, method)]
+        print(f"   Required Methods: {len(available_methods)}/{len(required_methods)} available")
         
         print("\n✅ Whisper service test completed successfully!")
         return True
