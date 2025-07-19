@@ -199,6 +199,37 @@ class TranscriptionManager:
         """Validate if language is supported."""
         return language_name in self.language_options
     
+    def test_connection(self) -> Dict[str, Any]:
+        """
+        Test Whisper service connection and model availability.
+        
+        Returns:
+            Dictionary with test results
+        """
+        try:
+            # Check if model is loaded
+            model_info = self.whisper_client.get_model_info()
+            
+            if model_info['loaded']:
+                return {
+                    'success': True,
+                    'message': f"Whisper model {model_info['name']} loaded successfully",
+                    'model_info': model_info
+                }
+            else:
+                return {
+                    'success': False,
+                    'message': f"Whisper model {model_info['name']} failed to load",
+                    'model_info': model_info
+                }
+                
+        except Exception as e:
+            return {
+                'success': False,
+                'message': f"Whisper service error: {str(e)}",
+                'model_info': None
+            }
+    
     def get_model_info(self) -> Dict[str, Any]:
         """Get current model information."""
         return self.whisper_client.get_model_info()
