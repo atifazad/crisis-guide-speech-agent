@@ -1,13 +1,16 @@
 # Voice-to-Voice AI Assistant
 
-A modern, web-based voice-to-voice AI assistant built with Python, featuring real-time speech input and Google Whisper integration for accurate speech-to-text conversion.
+A modern, modular voice-to-voice AI assistant built with Python, featuring real-time speech input, advanced audio preprocessing, and Google Whisper integration for accurate speech-to-text conversion.
 
 ## 🚀 Features
 
 - **Real-time Speech Input**: Record audio directly through your browser
-- **Google Whisper Integration**: High-quality speech-to-text conversion
+- **Advanced Audio Preprocessing**: Professional audio cleaning and normalization
+- **Google Whisper Integration**: High-quality speech-to-text conversion with multiple model options
+- **Multi-language Support**: Support for 10+ languages with auto-detection
 - **Modern Web Interface**: Built with Streamlit for a beautiful, responsive UI
-- **Customizable Settings**: Adjust recording duration and sample rate
+- **Modular Architecture**: Clean, maintainable code structure
+- **Customizable Settings**: Adjustable recording duration, sample rate, and language
 - **Audio Statistics**: Word and character count for transcribed text
 - **Cross-platform**: Works on Windows, macOS, and Linux
 
@@ -15,9 +18,10 @@ A modern, web-based voice-to-voice AI assistant built with Python, featuring rea
 
 - **Python 3.8+**
 - **Streamlit**: Web interface framework
-- **OpenAI Whisper**: Speech-to-text conversion
+- **OpenAI Whisper**: Speech-to-text conversion with multiple model sizes
 - **SoundDevice**: Audio recording and playback
-- **NumPy & SciPy**: Audio processing
+- **Librosa**: Professional audio processing and preprocessing
+- **NumPy & SciPy**: Audio processing and numerical operations
 - **PyAudio**: Audio I/O operations
 
 ## 📋 Prerequisites
@@ -25,6 +29,7 @@ A modern, web-based voice-to-voice AI assistant built with Python, featuring rea
 - Python 3.8 or higher
 - Microphone access
 - Internet connection (for initial Whisper model download)
+- FFmpeg (for audio processing)
 
 ## 🚀 Installation
 
@@ -36,12 +41,33 @@ A modern, web-based voice-to-voice AI assistant built with Python, featuring rea
 
 2. **Create a virtual environment (recommended)**
    ```bash
+   # Using uv (recommended)
+   uv venv
+   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+   
+   # Or using standard Python
    python -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
-3. **Install dependencies**
+3. **Install system dependencies**
    ```bash
+   # macOS
+   brew install portaudio ffmpeg
+   
+   # Ubuntu/Debian
+   sudo apt-get install portaudio19-dev ffmpeg
+   
+   # Windows
+   # Download and install FFmpeg from https://ffmpeg.org/download.html
+   ```
+
+4. **Install Python dependencies**
+   ```bash
+   # Using uv
+   uv pip install -r requirements.txt
+   
+   # Or using pip
    pip install -r requirements.txt
    ```
 
@@ -57,30 +83,24 @@ A modern, web-based voice-to-voice AI assistant built with Python, featuring rea
    - If it doesn't open automatically, navigate to the URL manually
 
 3. **Using the interface**
-   - Click the "🎤 Start Recording" button
+   - Adjust settings in the sidebar (recording duration, sample rate, language)
+   - Click "🎤 Start Recording" to begin audio capture
    - Speak clearly into your microphone
-   - Wait for the transcription to complete
-   - View the transcribed text in the results panel
+   - View transcribed text in real-time
+   - Use the copy button to copy transcribed text
 
 ## ⚙️ Configuration
 
 ### Recording Settings (Sidebar)
 - **Recording Duration**: 3-15 seconds (default: 5)
 - **Sample Rate**: 8000, 16000, or 44100 Hz (default: 16000)
+- **Language**: Auto-detect or select from 10+ languages
 
 ### Whisper Model
-- Currently using the "base" model for optimal performance
-- Models are cached for faster subsequent loads
+- **Default Model**: "small" (244M parameters) for optimal accuracy
+- **Available Models**: tiny, base, small, medium, large
+- **Models are cached** for faster subsequent loads
 
-## 📁 Project Structure
-
-```
-crisis-guide-speech-agent/
-├── app.py              # Main Streamlit application
-├── requirements.txt    # Python dependencies
-├── README.md          # Project documentation
-└── .gitignore         # Git ignore file
-```
 
 ## 🔧 Troubleshooting
 
@@ -90,19 +110,32 @@ crisis-guide-speech-agent/
    - Ensure microphone permissions are granted
    - Check if microphone is properly connected
    - Try refreshing the browser page
+   - Verify system audio settings
 
 2. **Whisper model download issues**
    - Ensure stable internet connection
    - The model downloads automatically on first use
-   - Check available disk space
+   - Check available disk space (models can be 1GB+)
 
-3. **PyAudio installation issues (Windows)**
+3. **FFmpeg not found error**
+   ```bash
+   # macOS
+   brew install ffmpeg
+   
+   # Ubuntu/Debian
+   sudo apt-get install ffmpeg
+   
+   # Windows
+   # Download from https://ffmpeg.org/download.html
+   ```
+
+4. **PyAudio installation issues (Windows)**
    ```bash
    pip install pipwin
    pipwin install pyaudio
    ```
 
-4. **PyAudio installation issues (macOS)**
+5. **PyAudio installation issues (macOS)**
    ```bash
    brew install portaudio
    pip install pyaudio
@@ -114,6 +147,7 @@ crisis-guide-speech-agent/
 - Speak clearly and at a normal pace
 - Keep the microphone close to your mouth
 - Higher sample rates provide better quality but use more resources
+- The "small" model provides good balance of accuracy and speed
 
 ## 🎯 Next Steps
 
@@ -122,9 +156,24 @@ This MVP provides the foundation for a voice-to-voice AI assistant. Future enhan
 - **Text-to-Speech**: Convert AI responses back to speech
 - **AI Integration**: Connect to language models for intelligent responses
 - **Real-time Processing**: Stream audio for continuous conversation
-- **Multi-language Support**: Support for multiple languages
 - **Voice Activity Detection**: Automatic start/stop recording
 - **Audio Visualization**: Real-time audio waveform display
+- **Advanced Audio Processing**: Noise cancellation, echo removal
+- **Multi-user Support**: Handle multiple simultaneous users
+- **API Integration**: RESTful API for external applications
+
+## 🧪 Testing
+
+Run the setup verification script to ensure everything is working:
+
+```bash
+python test_setup.py
+```
+
+This will test:
+- Package imports
+- Whisper model loading
+- Audio device detection
 
 ## 🤝 Contributing
 
@@ -142,4 +191,12 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - OpenAI for the Whisper model
 - Streamlit for the web framework
-- The open-source community for audio processing libraries 
+- The open-source community for audio processing libraries
+- Contributors and users of this project
+
+## 📊 Performance Metrics
+
+- **Transcription Accuracy**: Improved with audio preprocessing
+- **Processing Speed**: Optimized with modular architecture
+- **Memory Usage**: Efficient with proper cleanup
+- **User Experience**: Enhanced with better error handling and feedback 
