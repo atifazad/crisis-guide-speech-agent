@@ -53,11 +53,11 @@ class AudioFileManager:
         try:
             if os.path.exists(file_path):
                 os.unlink(file_path)
-                return True
-        except Exception as e:
-            ErrorHandler.log_error(f"Failed to cleanup temp file {file_path}: {e}")
+            return True  # Return True even if file doesn't exist (already cleaned up)
+        except (OSError, PermissionError) as e:
+            from .error_handler import log_error
+            log_error(f"Failed to cleanup temp file {file_path}: {e}")
             return False
-        return False
     
     @staticmethod
     def ensure_directory_exists(directory: str) -> bool:
@@ -74,7 +74,8 @@ class AudioFileManager:
             os.makedirs(directory, exist_ok=True)
             return True
         except Exception as e:
-            ErrorHandler.log_error(f"Failed to create directory {directory}: {e}")
+            from .error_handler import log_error
+            log_error(f"Failed to create directory {directory}: {e}")
             return False
     
     @staticmethod
@@ -91,7 +92,8 @@ class AudioFileManager:
         try:
             return os.path.getsize(file_path)
         except Exception as e:
-            ErrorHandler.log_error(f"Failed to get file size for {file_path}: {e}")
+            from .error_handler import log_error
+            log_error(f"Failed to get file size for {file_path}: {e}")
             return None
     
     @staticmethod

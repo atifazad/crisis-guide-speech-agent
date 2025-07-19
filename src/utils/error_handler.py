@@ -89,7 +89,8 @@ class ErrorHandler:
         try:
             return func(*args, **kwargs)
         except Exception as e:
-            return ErrorHandler.handle_error(e, error_message, fallback_value=fallback_value)
+            ErrorHandler.handle_error(e, error_message, fallback_value=fallback_value)
+            return fallback_value
 
 def log_info(message: str) -> None:
     """Log informational messages."""
