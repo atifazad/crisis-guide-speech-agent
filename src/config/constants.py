@@ -5,16 +5,7 @@ Constants and configuration values for the Voice-to-Voice AI Assistant.
 # Language options for transcription
 LANGUAGE_OPTIONS = {
     "Auto-detect": None,
-    "English": "en",
-    "Spanish": "es",
-    "French": "fr",
-    "German": "de",
-    "Italian": "it",
-    "Portuguese": "pt",
-    "Russian": "ru",
-    "Japanese": "ja",
-    "Korean": "ko",
-    "Chinese": "zh"
+    "English": "en"
 }
 
 # Audio recording settings

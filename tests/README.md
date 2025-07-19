@@ -63,7 +63,7 @@ This directory contains comprehensive unit tests for the Voice-to-Voice AI Assis
 - **TestUIComponentsIntegration**: Tests complete UI workflows
 
 #### Config Module Tests (`test_config.py`)
-- **TestLanguageOptions**: Tests language configuration
+- **TestLanguageOptions**: Tests language configuration (English only)
 - **TestAudioSettings**: Tests audio recording settings
 - **TestWhisperSettings**: Tests Whisper model settings
 - **TestUISettings**: Tests UI configuration

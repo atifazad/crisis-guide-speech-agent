@@ -227,7 +227,6 @@ class TestTranscriptionManager(unittest.TestCase):
         self.assertIsInstance(options, dict)
         self.assertIn("Auto-detect", options)
         self.assertIn("English", options)
-        self.assertIn("Spanish", options)
         self.assertIsNone(options["Auto-detect"])
         self.assertEqual(options["English"], "en")
     
@@ -280,9 +279,6 @@ class TestTranscriptionIntegration(unittest.TestCase):
         
         # Test some common language mappings
         self.assertEqual(manager.language_options["English"], "en")
-        self.assertEqual(manager.language_options["Spanish"], "es")
-        self.assertEqual(manager.language_options["French"], "fr")
-        self.assertEqual(manager.language_options["German"], "de")
         self.assertIsNone(manager.language_options["Auto-detect"])
     
     def test_model_initialization(self):

@@ -37,51 +37,6 @@ class TestLanguageOptions(unittest.TestCase):
         self.assertIn("English", LANGUAGE_OPTIONS)
         self.assertEqual(LANGUAGE_OPTIONS["English"], "en")
     
-    def test_spanish_option(self):
-        """Test that Spanish option is present and has correct code."""
-        self.assertIn("Spanish", LANGUAGE_OPTIONS)
-        self.assertEqual(LANGUAGE_OPTIONS["Spanish"], "es")
-    
-    def test_french_option(self):
-        """Test that French option is present and has correct code."""
-        self.assertIn("French", LANGUAGE_OPTIONS)
-        self.assertEqual(LANGUAGE_OPTIONS["French"], "fr")
-    
-    def test_german_option(self):
-        """Test that German option is present and has correct code."""
-        self.assertIn("German", LANGUAGE_OPTIONS)
-        self.assertEqual(LANGUAGE_OPTIONS["German"], "de")
-    
-    def test_italian_option(self):
-        """Test that Italian option is present and has correct code."""
-        self.assertIn("Italian", LANGUAGE_OPTIONS)
-        self.assertEqual(LANGUAGE_OPTIONS["Italian"], "it")
-    
-    def test_portuguese_option(self):
-        """Test that Portuguese option is present and has correct code."""
-        self.assertIn("Portuguese", LANGUAGE_OPTIONS)
-        self.assertEqual(LANGUAGE_OPTIONS["Portuguese"], "pt")
-    
-    def test_russian_option(self):
-        """Test that Russian option is present and has correct code."""
-        self.assertIn("Russian", LANGUAGE_OPTIONS)
-        self.assertEqual(LANGUAGE_OPTIONS["Russian"], "ru")
-    
-    def test_japanese_option(self):
-        """Test that Japanese option is present and has correct code."""
-        self.assertIn("Japanese", LANGUAGE_OPTIONS)
-        self.assertEqual(LANGUAGE_OPTIONS["Japanese"], "ja")
-    
-    def test_korean_option(self):
-        """Test that Korean option is present and has correct code."""
-        self.assertIn("Korean", LANGUAGE_OPTIONS)
-        self.assertEqual(LANGUAGE_OPTIONS["Korean"], "ko")
-    
-    def test_chinese_option(self):
-        """Test that Chinese option is present and has correct code."""
-        self.assertIn("Chinese", LANGUAGE_OPTIONS)
-        self.assertEqual(LANGUAGE_OPTIONS["Chinese"], "zh")
-    
     def test_language_codes_are_strings(self):
         """Test that all language codes are strings (except Auto-detect)."""
         for language, code in LANGUAGE_OPTIONS.items():
