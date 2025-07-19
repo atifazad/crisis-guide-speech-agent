@@ -8,6 +8,7 @@ librosa>=0.10.0
 python-dotenv>=1.0.0
 openai>=1.0.0
 elevenlabs>=0.2.0
+pipecat-ai>=0.0.1
 
 # Testing dependencies
 pytest>=7.4.0
