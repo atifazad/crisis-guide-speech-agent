@@ -24,7 +24,8 @@ from src.services.openai_service import OpenAIService
 from src.services.elevenlabs_service import ElevenLabsService
 from .elevenlabs_adapter import ElevenLabsAdapter
 from .whisper_adapter import WhisperAdapter
-from .conversation_state import ConversationStateManager, UrgencyLevel, ConversationState
+from .conversation_state import ConversationStateManager
+from .response_detector import ResponseDetector
 from src.utils.error_handler import log_error
 
 logger = logging.getLogger(__name__)
@@ -46,6 +47,9 @@ class PipecatPipelineManager:
         
         # Initialize conversation state
         self.conversation_state = ConversationStateManager()
+        
+        # Initialize response detector
+        self.response_detector = ResponseDetector()
         
         # Callbacks
         self.on_user_input: Optional[Callable[[str], None]] = None
@@ -205,8 +209,14 @@ class PipecatPipelineManager:
             await self.runner.run(pipeline_task)
             self.is_running = True
             
-            # Start conversation monitoring
-            asyncio.create_task(self._monitor_conversation())
+            # Set up response detector callbacks
+            self.response_detector.set_callbacks(
+                on_timeout=self._handle_response_timeout,
+                on_escalation=self._handle_response_escalation,
+                on_emergency=self._handle_response_emergency
+            )
+            
+            # Response detector handles monitoring automatically
             
             return True
             
@@ -229,6 +239,10 @@ class PipecatPipelineManager:
                 
                 # Update conversation state
                 self.conversation_state.add_user_input(sentence)
+                
+                # Register user response with detector
+                self.response_detector.user_responded()
+                
                 logger.info(f"User input: {sentence}")
             
             @self.runner.event_handler("llm_response")
@@ -240,6 +254,10 @@ class PipecatPipelineManager:
                 
                 # Update conversation state
                 self.conversation_state.update_ai_response(response)
+                
+                # Start monitoring for user response after AI speaks
+                self.response_detector.start_monitoring()
+                
                 logger.info(f"AI response: {response}")
             
             @self.runner.event_handler("error")
@@ -267,33 +285,33 @@ class PipecatPipelineManager:
             except Exception as e:
                 log_error(f"Error cleaning up PyAudio: {str(e)}")
     
-    async def _monitor_conversation(self):
-        """Monitor conversation for timeouts and escalation."""
-        while self.is_running:
-            try:
-                # Check for timeouts
-                if self.conversation_state.should_timeout():
-                    await self._handle_timeout()
-                
-                # Check for escalation
-                if self.conversation_state.should_escalate():
-                    await self._handle_escalation()
-                
-                await asyncio.sleep(1)  # Check every second
-                
-            except Exception as e:
-                log_error(f"Error in conversation monitoring: {str(e)}")
-                await asyncio.sleep(1)
+
     
-    async def _handle_timeout(self):
-        """Handle conversation timeout."""
-        escalation_message = self.conversation_state.get_escalation_message()
+    def _handle_response_timeout(self, message: str):
+        """Handle response timeout (5 seconds)."""
+        logger.info(f"Response timeout: {message}")
+        
+        # Generate TTS for timeout message
+        audio_file = self.elevenlabs_service.generate_crisis_speech(message, "urgent")
+        
+        if audio_file:
+            # Play the timeout message
+            try:
+                import subprocess
+                subprocess.run(["afplay", audio_file], check=True)
+                self.elevenlabs_service.cleanup_audio_file(audio_file)
+            except:
+                pass
+        
+        # Update conversation state
+        self.conversation_state.escalate_urgency()
+    
+    def _handle_response_escalation(self, message: str):
+        """Handle response escalation (10 seconds)."""
+        logger.info(f"Response escalation: {message}")
         
         # Generate TTS for escalation message
-        audio_file = self.elevenlabs_service.generate_crisis_speech(
-            escalation_message, 
-            self.conversation_state.current_urgency.value
-        )
+        audio_file = self.elevenlabs_service.generate_crisis_speech(message, "emergency")
         
         if audio_file:
             # Play the escalation message
@@ -306,19 +324,26 @@ class PipecatPipelineManager:
         
         # Update conversation state
         self.conversation_state.escalate_urgency()
-        
-        # Trigger escalation callback
-        if self.on_escalation:
-            self.on_escalation(escalation_message)
     
-    async def _handle_escalation(self):
-        """Handle conversation escalation."""
-        if self.conversation_state.current_urgency == UrgencyLevel.EMERGENCY:
-            # Trigger emergency services
-            emergency_message = "EMERGENCY: Calling 911 now."
-            
-            if self.on_escalation:
-                self.on_escalation(emergency_message)
+    def _handle_response_emergency(self, message: str):
+        """Handle response emergency (15 seconds)."""
+        logger.info(f"Response emergency: {message}")
+        
+        # Generate TTS for emergency message
+        audio_file = self.elevenlabs_service.generate_crisis_speech(message, "emergency")
+        
+        if audio_file:
+            # Play the emergency message
+            try:
+                import subprocess
+                subprocess.run(["afplay", audio_file], check=True)
+                self.elevenlabs_service.cleanup_audio_file(audio_file)
+            except:
+                pass
+        
+        # Trigger emergency callback
+        if self.on_escalation:
+            self.on_escalation(message)
     
     def set_callbacks(self, 
                      on_user_input: Optional[Callable[[str], None]] = None,
@@ -357,6 +382,9 @@ class PipecatPipelineManager:
         
         # Add conversation state
         status["conversation"] = self.conversation_state.get_conversation_summary()
+        
+        # Add response detection status
+        status["response_detection"] = self.response_detector.get_status()
         
         return status
     
