@@ -13,7 +13,7 @@ A modern, modular voice-to-voice AI assistant built with Python, featuring real-
 - **Customizable Settings**: Adjustable recording duration, sample rate, and language
 - **Audio Statistics**: Word and character count for transcribed text
 - **Cross-platform**: Works on Windows, macOS, and Linux
-
+RE 
 ## 🛠️ Technology Stack
 
 - **Python 3.8+**
@@ -91,10 +91,22 @@ A modern, modular voice-to-voice AI assistant built with Python, featuring real-
 
 ## ⚙️ Configuration
 
+### Environment Variables
+
+The application supports configuration via environment variables. Create a `.env` file in the project root:
+
+```bash
+# Copy the example file
+cp env.example .env
+
+# Edit the .env file and add your OpenAI API key
+OPENAI_API_KEY=your_openai_api_key_here
+```
+
 ### Recording Settings (Sidebar)
 - **Recording Duration**: 3-15 seconds (default: 5)
 - **Sample Rate**: 8000, 16000, or 44100 Hz (default: 16000)
-- **Language**: Auto-detect or select from 10+ languages
+- **Language**: Auto-detect or English
 
 ### Whisper Model
 - **Default Model**: "small" (244M parameters) for optimal accuracy

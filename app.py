@@ -1,6 +1,7 @@
 """
 Refactored main application for the Voice-to-Voice AI Assistant.
 Uses the new modular structure for better maintainability.
+Now supports environment variable configuration.
 """
 
 import streamlit as st
@@ -8,6 +9,7 @@ from typing import Optional
 
 # Import our modular components
 from src.config.constants import AUDIO_SETTINGS, UI_SETTINGS
+from src.config.config_validator import ConfigValidator
 from src.audio.recorder import AudioRecorder
 from src.audio.preprocessor import AudioPreprocessor
 from src.transcription.whisper_client import TranscriptionManager
@@ -40,6 +42,9 @@ def main():
     
     # Render header
     UIComponents.render_header()
+    
+    # Display configuration summary in sidebar (optional)
+    ConfigValidator.display_config_summary()
     
     # Get device information
     device_info = audio_recorder.get_device_info()
