@@ -1,175 +1,141 @@
+#!/usr/bin/env python3
 """
-OpenAI service for crisis response generation using the Responses API.
-Handles API calls and response formatting for crisis situations.
+OpenAI Service
+Handles all OpenAI API interactions including GPT-4o responses
 """
 
+import logging
 import openai
-from typing import Optional, Dict, Any, List
-from src.config.openai_config import get_openai_api_key, is_openai_configured
+from typing import Optional, List, Dict, Any
+from config import Config
+
+logger = logging.getLogger(__name__)
 
 class OpenAIService:
-    """OpenAI service for crisis response generation using Responses API."""
+    """Service for handling OpenAI API interactions."""
     
     def __init__(self):
         """Initialize the OpenAI service."""
-        self.api_key = get_openai_api_key()
-        self.is_configured = is_openai_configured()
-        
-        if self.is_configured:
-            self.client = openai.OpenAI(api_key=self.api_key)
-        else:
-            self.client = None
+        self.client = openai.OpenAI(api_key=Config.get_api_key())
+        self.model = Config.get_model()
+        self.max_tokens = Config.get_max_tokens()
+        self.temperature = Config.get_temperature()
+        logger.info(f"OpenAI service initialized with model: {self.model}")
     
-    def generate_crisis_response(self, crisis_description: str, conversation_history: List[Dict] = None) -> Optional[str]:
+    def create_chat_completion(
+        self, 
+        messages: List[Dict[str, str]], 
+        max_tokens: Optional[int] = None,
+        temperature: Optional[float] = None
+    ) -> Optional[str]:
         """
-        Generate a crisis response using OpenAI Responses API.
+        Create a chat completion using OpenAI API.
         
         Args:
-            crisis_description: Description of the crisis situation
-            conversation_history: Previous conversation messages for context
+            messages: List of message dictionaries with 'role' and 'content'
+            max_tokens: Maximum tokens for response (uses config default if None)
+            temperature: Temperature for response (uses config default if None)
             
         Returns:
-            AI-generated crisis response or None if error
+            Response text or None if error
         """
-        if not self.is_configured:
-            return "❌ OpenAI API not configured. Please add your API key to the .env file."
-        
         try:
-            # Prepare messages for the conversation
-            messages = []
-            
-            # Add system message for crisis response behavior
-            system_message = {
-                "role": "system",
-                "content": """You are a crisis response AI assistant. Your role is to provide immediate, 
-                clear, and actionable guidance during emergencies. Always prioritize safety first.
-                
-                Guidelines:
-                - Be direct and action-oriented - no unnecessary disclaimers
-                - Provide immediate safety instructions
-                - Be empathetic and helpful
-                - Include emergency numbers when appropriate
-                - Ask follow-up questions to assess the situation
-                - If life-threatening, emphasize calling 911 immediately
-                - Be proactive in asking safety questions
-                - If no response is received, escalate to emergency services
-                
-                Response Style:
-                - Start with immediate action steps
-                - Be clear and direct
-                - Show empathy and concern
-                - Provide specific, actionable guidance
-                - Ask relevant follow-up questions"""
-            }
-            messages.append(system_message)
-            
-            # Add conversation history for context
-            if conversation_history:
-                messages.extend(conversation_history)
-            
-            # Prepare crisis-specific input with instructions
-            crisis_input = f"""You are a crisis response AI assistant. Be direct, empathetic, and action-oriented. 
-            Provide immediate safety instructions without unnecessary disclaimers.
-            
-            User emergency: {crisis_description}
-            
-            Respond with clear, actionable steps and show empathy."""
-            
-            # Generate response using Responses API
-            response = self.client.responses.create(
-                input=crisis_input,
-                model="gpt-4o"
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                max_tokens=max_tokens or self.max_tokens,
+                temperature=temperature or self.temperature
             )
             
-            return response.output[0].content[0].text
+            response_text = response.choices[0].message.content
+            logger.info(f"Generated OpenAI response with {len(response_text)} characters")
+            return response_text
             
         except Exception as e:
-            return f"❌ Error generating response: {str(e)}"
-    
-    def generate_proactive_question(self, context: str = "", conversation_history: List[Dict] = None) -> Optional[str]:
-        """
-        Generate a proactive question to assess the situation.
-        
-        Args:
-            context: Previous conversation context
-            conversation_history: Previous conversation messages
-            
-        Returns:
-            Proactive question or None if error
-        """
-        if not self.is_configured:
+            logger.error(f"OpenAI API error: {str(e)}")
             return None
-        
-        try:
-            # Prepare messages
-            messages = []
-            
-            # Add system message for proactive questioning
-            system_message = {
-                "role": "system",
-                "content": """You are a crisis response AI. Generate a single, direct question to assess 
-                the current situation and ensure the person is safe. Keep it short and actionable.
-                Examples: "Can you breathe?", "Are you able to evacuate?", "Are you safe right now?" """
-            }
-            messages.append(system_message)
-            
-            # Add conversation history
-            if conversation_history:
-                messages.extend(conversation_history)
-            
-            # Prepare proactive question input
-            if context:
-                question_input = f"""You are a crisis response AI. Generate a single, direct, empathetic question to assess safety.
-                
-                Context: {context}
-                
-                Generate one direct safety question:"""
-            else:
-                question_input = """You are a crisis response AI. Generate a single, direct, empathetic question to assess safety.
-                
-                Generate one direct safety question:"""
-            
-            # Generate response
-            response = self.client.responses.create(
-                input=question_input,
-                model="gpt-4o"
-            )
-            
-            return response.output[0].content[0].text
-            
-        except Exception as e:
-            return "Are you safe right now?"
     
-    def test_connection(self) -> Dict[str, Any]:
+    def get_agentic_response(self, user_message: str, system_prompt: str) -> str:
         """
-        Test the OpenAI API connection.
+        Get an agentic response using a custom system prompt.
+        
+        Args:
+            user_message: The user's message
+            system_prompt: Custom system prompt to use
+            
+        Returns:
+            Response text or fallback message
+        """
+        try:
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_message}
+            ]
+            
+            response = self.create_chat_completion(messages)
+            
+            if response:
+                return response
+            else:
+                return "I'm here to help. Can you tell me what's happening?"
+                
+        except Exception as e:
+            logger.error(f"Agentic response error: {str(e)}")
+            return "I'm here to help. Can you tell me what's happening?"
+    
+    def get_default_agentic_response(self, user_message: str) -> str:
+        """
+        Get an agentic response using the default system prompt.
+        
+        Args:
+            user_message: The user's message
+            
+        Returns:
+            Response text or fallback message
+        """
+        system_prompt = """You are an agentic AI assistant that takes initiative and leads conversations.
+
+CORE BEHAVIORS:
+- Take initiative and lead conversations proactively
+- Ask specific, relevant questions based on the situation
+- Provide clear, actionable guidance
+- Stay calm and reassuring in emergencies
+- Escalate appropriately when needed
+
+CONVERSATION STYLE:
+- Be direct and authoritative but caring
+- Use simple, clear language suitable for voice
+- Avoid complex explanations
+- Focus on immediate needs and safety
+- Provide step-by-step guidance when appropriate
+
+RESPONSE GUIDELINES:
+- Be proactive and take initiative
+- Ask relevant questions to assess the situation
+- Provide clear, actionable steps
+- Stay calm and reassuring
+- Use natural, conversational language
+- Keep responses concise for voice interaction
+
+Respond as the agentic assistant:"""
+        
+        return self.get_agentic_response(user_message, system_prompt)
+    
+    def validate_api_key(self) -> bool:
+        """
+        Validate that the OpenAI API key is working.
         
         Returns:
-            Dictionary with test results
+            True if API key is valid, False otherwise
         """
-        if not self.is_configured:
-            return {
-                "success": False,
-                "error": "OpenAI API not configured",
-                "message": "Add OPENAI_API_KEY to .env file"
-            }
-        
         try:
-            # Test with a simple response
-            response = self.client.responses.create(
-                input="Test",
-                model="gpt-4o"
+            # Try a simple completion to test the API key
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[{"role": "user", "content": "Hello"}],
+                max_tokens=5
             )
-            
-            return {
-                "success": True,
-                "message": "OpenAI Responses API connection successful",
-                "api": "Responses API"
-            }
-            
+            return True
         except Exception as e:
-            return {
-                "success": False,
-                "error": str(e),
-                "message": "OpenAI API connection failed"
-            } 
+            logger.error(f"OpenAI API key validation failed: {str(e)}")
+            return False 

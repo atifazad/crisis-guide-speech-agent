@@ -1,253 +1,146 @@
+#!/usr/bin/env python3
 """
-ElevenLabs TTS service for crisis response voice output.
-Handles text-to-speech conversion with configurable voice settings.
+ElevenLabs Service
+Handles all ElevenLabs API interactions including text-to-speech conversion
 """
 
-import os
-import tempfile
+import logging
+import requests
 from typing import Optional, Dict, Any
-from elevenlabs.client import ElevenLabs
-from elevenlabs import save, voices, VoiceSettings
-from src.utils.error_handler import log_error
+from config import Config
+
+logger = logging.getLogger(__name__)
 
 class ElevenLabsService:
-    """ElevenLabs TTS service for crisis response voice output."""
+    """Service for handling ElevenLabs API interactions."""
     
     def __init__(self):
         """Initialize the ElevenLabs service."""
-        self.api_key = self._get_api_key()
-        self.is_configured = bool(self.api_key)
-        
-        if self.is_configured:
-            self.client = ElevenLabs(api_key=self.api_key)
-            self._configure_default_voice()
-        else:
-            self.client = None
-            self.default_voice_id = None
-            self.voice_settings = None
+        self.api_key = Config.get_elevenlabs_api_key()
+        self.voice_id = Config.get_elevenlabs_voice_id()
+        self.base_url = Config.get_elevenlabs_base_url()
+        logger.info(f"ElevenLabs service initialized with voice ID: {self.voice_id}")
     
-    def _get_api_key(self) -> Optional[str]:
-        """Get ElevenLabs API key from environment."""
-        return os.getenv('ELEVENLABS_API_KEY')
-    
-    def _configure_default_voice(self):
-        """Configure default voice settings for crisis response."""
-        # Use a professional, calm voice suitable for crisis situations
-        self.default_voice_id = "pNInz6obpgDQGcFmaJgB"  # Adam voice (professional)
-        
-        # Configure voice settings for crisis response
-        self.voice_settings = VoiceSettings(
-            stability=0.7,        # Balanced stability
-            similarity_boost=0.75, # Good voice clarity
-            style=0.0,            # Neutral style
-            use_speaker_boost=True # Enhanced clarity
-        )
-    
-    def generate_speech(self, text: str, voice_id: Optional[str] = None, 
-                       voice_settings: Optional[VoiceSettings] = None) -> Optional[str]:
+    def text_to_speech(self, text: str, voice_settings: Optional[Dict[str, float]] = None) -> Optional[bytes]:
         """
-        Generate speech from text using ElevenLabs TTS.
+        Convert text to speech using ElevenLabs API.
         
         Args:
-            text: Text to convert to speech
-            voice_id: Optional voice ID (uses default if None)
-            voice_settings: Optional voice settings (uses default if None)
+            text: The text to convert to speech
+            voice_settings: Optional voice settings (stability, similarity_boost)
             
         Returns:
-            Path to generated audio file or None if error
+            Audio data as bytes or None if error
         """
-        if not self.is_configured:
-            log_error("ElevenLabs API not configured")
-            return None
-        
         try:
-            # Use default settings if not provided
-            voice_id = voice_id or self.default_voice_id
-            voice_settings = voice_settings or self.voice_settings
+            url = f"{self.base_url}/text-to-speech/{self.voice_id}"
             
-            # Generate audio using the client API
-            audio = self.client.text_to_speech.convert(
-                text=text,
-                voice_id=voice_id,
-                model_id="eleven_monolingual_v1",
-                voice_settings=voice_settings
-            )
-            
-            # Save to temporary file
-            temp_file = tempfile.NamedTemporaryFile(
-                suffix=".mp3", 
-                delete=False,
-                prefix="crisis_response_"
-            )
-            save(audio, temp_file.name)
-            
-            return temp_file.name
-            
-        except Exception as e:
-            log_error(f"Error generating speech: {str(e)}")
-            return None
-    
-    def generate_crisis_speech(self, text: str, urgency_level: str = "normal") -> Optional[str]:
-        """
-        Generate speech optimized for crisis response scenarios.
-        
-        Args:
-            text: Text to convert to speech
-            urgency_level: "normal", "urgent", or "emergency"
-            
-        Returns:
-            Path to generated audio file or None if error
-        """
-        if not self.is_configured:
-            return None
-        
-        try:
-            # Adjust voice settings based on urgency
-            settings = self._get_urgency_settings(urgency_level)
-            
-            return self.generate_speech(text, voice_settings=settings)
-            
-        except Exception as e:
-            log_error(f"Error generating crisis speech: {str(e)}")
-            return None
-    
-    def _get_urgency_settings(self, urgency_level: str) -> VoiceSettings:
-        """
-        Get voice settings optimized for different urgency levels.
-        
-        Args:
-            urgency_level: "normal", "urgent", or "emergency"
-            
-        Returns:
-            VoiceSettings optimized for the urgency level
-        """
-        base_settings = VoiceSettings(
-            stability=0.7,
-            similarity_boost=0.75,
-            style=0.0,
-            use_speaker_boost=True
-        )
-        
-        if urgency_level == "urgent":
-            return VoiceSettings(
-                stability=0.6,        # Slightly less stable for urgency
-                similarity_boost=0.8,  # Higher clarity
-                style=0.2,            # Slight urgency in tone
-                use_speaker_boost=True
-            )
-        elif urgency_level == "emergency":
-            return VoiceSettings(
-                stability=0.5,        # Less stable for high urgency
-                similarity_boost=0.85, # Maximum clarity
-                style=0.4,            # Clear urgency in tone
-                use_speaker_boost=True
-            )
-        else:
-            return base_settings
-    
-    def get_available_voices(self) -> Dict[str, Any]:
-        """
-        Get list of available voices.
-        
-        Returns:
-            Dictionary with voice information
-        """
-        if not self.is_configured:
-            return {"error": "ElevenLabs API not configured"}
-        
-        try:
-            available_voices = self.client.voices.get_all()
-            
-            voice_list = []
-            for voice in available_voices:
-                # Handle different response formats from ElevenLabs API
-                try:
-                    if hasattr(voice, 'voice_id'):
-                        voice_id = voice.voice_id
-                    elif hasattr(voice, 'id'):
-                        voice_id = voice.id
-                    else:
-                        voice_id = str(voice)  # Fallback
-                    
-                    voice_info = {
-                        "id": voice_id,
-                        "name": getattr(voice, 'name', 'Unknown'),
-                        "category": getattr(voice, 'category', 'Unknown'),
-                        "description": ""
-                    }
-                    
-                    # Try to get description from labels if available
-                    if hasattr(voice, 'labels') and voice.labels:
-                        voice_info["description"] = voice.labels.get("description", "")
-                    
-                    voice_list.append(voice_info)
-                    
-                except Exception as voice_error:
-                    # Skip problematic voice entries
-                    continue
-            
-            return {
-                "success": True,
-                "voices": voice_list,
-                "count": len(voice_list)
+            headers = {
+                "Accept": "audio/mpeg",
+                "Content-Type": "application/json",
+                "xi-api-key": self.api_key
             }
             
-        except Exception as e:
-            return {
-                "success": False,
-                "error": str(e)
-            }
-    
-    def test_connection(self) -> Dict[str, Any]:
-        """
-        Test the ElevenLabs API connection.
-        
-        Returns:
-            Dictionary with test results
-        """
-        if not self.is_configured:
-            return {
-                "success": False,
-                "error": "ElevenLabs API not configured",
-                "message": "Add ELEVENLABS_API_KEY to .env file"
-            }
-        
-        try:
-            # Test with a simple text-to-speech conversion
-            test_text = "ElevenLabs TTS connection test successful."
-            audio_file = self.generate_speech(test_text)
-            
-            if audio_file and os.path.exists(audio_file):
-                # Clean up test file
-                os.unlink(audio_file)
-                return {
-                    "success": True,
-                    "message": "ElevenLabs TTS connection successful",
-                    "api": "ElevenLabs TTS"
+            # Default voice settings
+            if voice_settings is None:
+                voice_settings = {
+                    "stability": 0.5,
+                    "similarity_boost": 0.5
                 }
+            
+            data = {
+                "text": text,
+                "model_id": "eleven_monolingual_v1",
+                "voice_settings": voice_settings
+            }
+            
+            response = requests.post(url, json=data, headers=headers)
+            
+            if response.status_code == 200:
+                audio_data = response.content
+                logger.info(f"Generated TTS audio: {len(audio_data)} bytes")
+                return audio_data
             else:
-                return {
-                    "success": False,
-                    "error": "Failed to generate test audio",
-                    "message": "TTS generation failed"
-                }
+                logger.error(f"ElevenLabs API error: {response.status_code} - {response.text}")
+                return None
                 
         except Exception as e:
-            return {
-                "success": False,
-                "error": str(e),
-                "message": "ElevenLabs API connection failed"
-            }
+            logger.error(f"TTS error: {str(e)}")
+            return None
     
-    def cleanup_audio_file(self, file_path: str):
+    def get_available_voices(self) -> Optional[list]:
         """
-        Clean up temporary audio file.
+        Get list of available voices from ElevenLabs.
         
-        Args:
-            file_path: Path to the audio file to delete
+        Returns:
+            List of voice dictionaries or None if error
         """
         try:
-            if file_path and os.path.exists(file_path):
-                os.unlink(file_path)
+            url = f"{self.base_url}/voices"
+            
+            headers = {
+                "Accept": "application/json",
+                "xi-api-key": self.api_key
+            }
+            
+            response = requests.get(url, headers=headers)
+            
+            if response.status_code == 200:
+                voices = response.json().get("voices", [])
+                logger.info(f"Retrieved {len(voices)} available voices")
+                return voices
+            else:
+                logger.error(f"ElevenLabs voices API error: {response.status_code} - {response.text}")
+                return None
+                
         except Exception as e:
-            log_error(f"Error cleaning up audio file: {str(e)}") 
+            logger.error(f"Error getting voices: {str(e)}")
+            return None
+    
+    def validate_api_key(self) -> bool:
+        """
+        Validate that the ElevenLabs API key is working.
+        
+        Returns:
+            True if API key is valid, False otherwise
+        """
+        try:
+            # Try to get available voices to test the API key
+            voices = self.get_available_voices()
+            return voices is not None
+        except Exception as e:
+            logger.error(f"ElevenLabs API key validation failed: {str(e)}")
+            return False
+    
+    def get_voice_info(self, voice_id: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        """
+        Get information about a specific voice.
+        
+        Args:
+            voice_id: Voice ID to get info for (uses default if None)
+            
+        Returns:
+            Voice information dictionary or None if error
+        """
+        try:
+            voice_id = voice_id or self.voice_id
+            url = f"{self.base_url}/voices/{voice_id}"
+            
+            headers = {
+                "Accept": "application/json",
+                "xi-api-key": self.api_key
+            }
+            
+            response = requests.get(url, headers=headers)
+            
+            if response.status_code == 200:
+                voice_info = response.json()
+                logger.info(f"Retrieved voice info for: {voice_info.get('name', 'Unknown')}")
+                return voice_info
+            else:
+                logger.error(f"ElevenLabs voice info API error: {response.status_code} - {response.text}")
+                return None
+                
+        except Exception as e:
+            logger.error(f"Error getting voice info: {str(e)}")
+            return None 

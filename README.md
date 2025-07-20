@@ -1,214 +1,308 @@
-# Voice-to-Voice AI Assistant
+# Text Chat Agent
 
-A modern, modular voice-to-voice AI assistant built with Python, featuring real-time speech input, advanced audio preprocessing, and Google Whisper integration for accurate speech-to-text conversion.
+A simple and powerful command-line chat agent built with Python and OpenAI API. This agent can have natural conversations with users, maintain conversation history, and save/load conversations.
 
-## 🚀 Features
+## Features
 
-- **Real-time Speech Input**: Record audio directly through your browser
-- **Advanced Audio Preprocessing**: Professional audio cleaning and normalization
-- **Google Whisper Integration**: High-quality speech-to-text conversion with multiple model options
-- **Multi-language Support**: Support for 10+ languages with auto-detection
-- **Modern Web Interface**: Built with Streamlit for a beautiful, responsive UI
-- **Modular Architecture**: Clean, maintainable code structure
-- **Customizable Settings**: Adjustable recording duration, sample rate, and language
-- **Audio Statistics**: Word and character count for transcribed text
-- **Cross-platform**: Works on Windows, macOS, and Linux
-RE 
-## 🛠️ Technology Stack
+### Text Chat Agent
+- 🤖 **AI-Powered Conversations**: Uses OpenAI's GPT-4o for natural language processing
+- 💬 **Conversation History**: Maintains context throughout the conversation
+- 💾 **Save/Load Conversations**: Save conversations to JSON files and load them later
+- 📊 **Conversation Analytics**: View statistics about your conversations
+- 🛡️ **Error Handling**: Robust error handling for API issues and network problems
+- 📝 **Logging**: Comprehensive logging for debugging and monitoring
+- ⚡ **Real-time Responses**: Get instant responses from the AI assistant
 
-- **Python 3.8+**
-- **Streamlit**: Web interface framework
-- **OpenAI Whisper**: Speech-to-text conversion with multiple model sizes
-- **SoundDevice**: Audio recording and playback
-- **Librosa**: Professional audio processing and preprocessing
-- **NumPy & SciPy**: Audio processing and numerical operations
-- **PyAudio**: Audio I/O operations
+### Voice Chat Agent (NEW!)
+- 🎤 **Real-time Speech-to-Text**: Uses Google Whisper for accurate transcription
+- 🔊 **High-quality Text-to-Speech**: Uses ElevenLabs for natural voice synthesis
+- 🌐 **WebRTC Audio Streaming**: Real-time audio capture and playback
+- 📱 **Modern Web Interface**: Beautiful, responsive voice chat interface
+- 🎛️ **Volume Control**: Adjustable audio playback volume
+- 📊 **Status Indicators**: Real-time processing status and feedback
+- 🔄 **Dual Input Modes**: Voice recording or text input
 
-## 📋 Prerequisites
+## Installation
 
-- Python 3.8 or higher
-- Microphone access
-- Internet connection (for initial Whisper model download)
-- FFmpeg (for audio processing)
+### Option 1: Using uv (Recommended)
 
-## 🚀 Installation
-
-1. **Clone the repository**
+1. **Install uv** (if not already installed):
    ```bash
-   git clone <repository-url>
-   cd crisis-guide-speech-agent
+   curl -LsSf https://astral.sh/uv/install.sh | sh
    ```
 
-2. **Create a virtual environment (recommended)**
+2. **Run the setup script**:
    ```bash
-   # Using uv (recommended)
-   uv venv
-   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-   
-   # Or using standard Python
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   chmod +x setup.sh
+   ./setup.sh
    ```
 
-3. **Install system dependencies**
-   ```bash
-   # macOS
-   brew install portaudio ffmpeg
-   
-   # Ubuntu/Debian
-   sudo apt-get install portaudio19-dev ffmpeg
-   
-   # Windows
-   # Download and install FFmpeg from https://ffmpeg.org/download.html
-   ```
+### Option 2: Manual Installation
 
-4. **Install Python dependencies**
+1. **Clone or download the project files**
+
+2. **Install Python dependencies**:
    ```bash
-   # Using uv
-   uv pip install -r requirements.txt
-   
-   # Or using pip
    pip install -r requirements.txt
    ```
 
-## 🎯 Usage
-
-1. **Start the application**
+3. **Verify installation**:
    ```bash
-   streamlit run app.py
+   python test_agent.py
    ```
 
-2. **Open your browser**
-   - The app will automatically open at `http://localhost:8501`
-   - If it doesn't open automatically, navigate to the URL manually
-
-3. **Using the interface**
-   - Adjust settings in the sidebar (recording duration, sample rate, language)
-   - Click "🎤 Start Recording" to begin audio capture
-   - Speak clearly into your microphone
-   - View transcribed text in real-time
-   - Use the copy button to copy transcribed text
-
-## ⚙️ Configuration
+## Configuration
 
 ### Environment Variables
 
-The application supports configuration via environment variables. Create a `.env` file in the project root:
+The application uses environment variables for configuration. The `.env` file has been created with the current API keys. For production use, you should update the API keys in the `.env` file with your own keys.
+
+To use your own API keys, edit the `.env` file:
 
 ```bash
-# Copy the example file
-cp env.example .env
+# OpenAI Configuration
+OPENAI_API_KEY=your_openai_key_here
+OPENAI_MODEL=gpt-4o
+OPENAI_MAX_TOKENS=1000
+OPENAI_TEMPERATURE=0.7
 
-# Edit the .env file and add your OpenAI API key
-OPENAI_API_KEY=your_openai_api_key_here
+# ElevenLabs Configuration
+ELEVENLABS_API_KEY=your_elevenlabs_key_here
+ELEVENLABS_VOICE_ID=21m00Tcm4TlvDq8ikWAM
+ELEVENLABS_BASE_URL=https://api.elevenlabs.io/v1
+
+# Whisper Configuration
+WHISPER_MODEL=small
+WHISPER_LANGUAGE=en
+
+# Server Configuration
+WEBSOCKET_PORT=8766
+WEB_UI_PORT=8001
+
+# Emergency Configuration
+EMERGENCY_ESCALATION_DELAY=5
+MAX_SILENCE_COUNT=3
+PROACTIVE_CHECK_INTERVAL=2
 ```
 
-### Recording Settings (Sidebar)
-- **Recording Duration**: 3-15 seconds (default: 5)
-- **Sample Rate**: 8000, 16000, or 44100 Hz (default: 16000)
-- **Language**: Auto-detect or English
+### Required API Keys
 
-### Whisper Model
-- **Default Model**: "small" (244M parameters) for optimal accuracy
-- **Available Models**: tiny, base, small, medium, large
-- **Models are cached** for faster subsequent loads
+1. **OpenAI API Key**: Get from [OpenAI Platform](https://platform.openai.com/)
+2. **ElevenLabs API Key**: Get from [ElevenLabs](https://elevenlabs.io/)
+
+## Usage
+
+### Basic Usage
+
+#### Text Chat Agent
+Run the text chat agent:
+```bash
+python chat_agent.py
+```
+
+#### Voice Chat Agent
+1. **Setup voice components**:
+   ```bash
+   ./setup_voice.sh
+   ```
+
+2. **Configure API keys** (see Configuration section above)
+
+3. **Start the voice server** (Terminal 1):
+   ```bash
+   python src/agents/agentic_voice_agent.py
+   ```
+
+4. **Start the web interface** (Terminal 2):
+   ```bash
+   python src/web/agentic_voice_web_ui.py
+   ```
+
+5. **Open in browser**:
+   ```
+   http://localhost:8001
+   ```
+
+### Quick Start with Script
+
+Use the provided startup script to run both services:
+
+```bash
+./start_agentic_voice.sh
+```
+
+This will:
+- Check port availability
+- Validate configuration
+- Start both the WebSocket server and web UI
+- Display connection information
+
+### Available Commands
+
+Once the chat agent is running, you can use these special commands:
+
+- `quit` - Exit the chat agent
+- `clear` - Clear the conversation history
+- `save` - Save the current conversation to a JSON file
+- `load <filename>` - Load a previous conversation from a JSON file
+- `summary` - Show conversation statistics
+
+### Example Session
+
+```
+🤖 Text Chat Agent
+==================================================
+Type 'quit' to exit, 'clear' to clear history, 'save' to save conversation
+Type 'load <filename>' to load a previous conversation
+Type 'summary' to see conversation statistics
+==================================================
+
+✅ Chat agent initialized successfully!
+
+💬 Start chatting with the AI assistant...
+
+👤 You: Hello! How are you today?
+🤖 Assistant: Hello! I'm doing well, thank you for asking. I'm here and ready to help you with any questions or tasks you might have. How can I assist you today?
+
+👤 You: Can you help me write a Python function?
+🤖 Assistant: Of course! I'd be happy to help you write a Python function. What kind of function do you need? Please let me know:
+
+1. What the function should do
+2. What parameters it should take
+3. What it should return
+4. Any specific requirements or constraints
+
+For example, are you looking to create a function that:
+- Performs calculations?
+- Processes data?
+- Handles file operations?
+- Something else entirely?
+
+Once you give me the details, I can help you write the function and explain how it works!
+
+👤 You: summary
+📊 Conversation Summary:
+   Total messages: 4
+   User messages: 2
+   Assistant messages: 2
+   Total user characters: 47
+   Total assistant characters: 234
+
+👤 You: save
+💾 Conversation saved to conversation_20241201_143022.json
+
+👤 You: quit
+👋 Goodbye!
+```
+
+## Model Selection
+
+By default, the agent uses `gpt-4o`. You can change this by modifying the `OPENAI_MODEL` environment variable.
+
+Available models:
+- `gpt-4o` (default, latest and most capable model)
+- `gpt-4-turbo` (previous GPT-4 model)
+- `gpt-3.5-turbo` (fast and cost-effective)
 
 
-## 🔧 Troubleshooting
+## Architecture
+
+### Service Layer
+
+The application uses a service-oriented architecture with dedicated services for each external API:
+
+- **`OpenAIService`**: Handles all OpenAI API interactions including GPT-4o responses
+- **`ElevenLabsService`**: Handles text-to-speech conversion and voice management
+- **`WhisperService`**: Handles speech-to-text transcription
+
+Each service provides:
+- **Error handling and retries**
+- **API key validation**
+- **Configuration management**
+- **Logging and monitoring**
+
+### Benefits of Service Layer
+
+- **Separation of concerns**: Each service handles one specific API
+- **Better error handling**: Centralized error handling per service
+- **Easier testing**: Can mock individual services for testing
+- **Reusability**: Services can be used by other components
+- **Maintainability**: Changes to API logic are isolated
+
+## Features in Detail
+
+### Conversation Management
+
+The chat agent maintains a complete conversation history, allowing for contextual responses. Each message includes:
+- Role (user/assistant)
+- Content
+- Timestamp
+
+### Error Handling
+
+The agent handles various error scenarios:
+- **Authentication errors**: Invalid API key
+- **Rate limiting**: Too many requests
+- **Network issues**: Connection problems
+- **API errors**: OpenAI service issues
+
+### Logging
+
+All activities are logged to both:
+- Console output
+- `chat_agent.log` file
+
+### Conversation Persistence
+
+Conversations can be saved and loaded using JSON format, preserving:
+- All messages
+- Timestamps
+- Conversation context
+
+## Troubleshooting
 
 ### Common Issues
 
-1. **Audio recording not working**
-   - Ensure microphone permissions are granted
-   - Check if microphone is properly connected
-   - Try refreshing the browser page
-   - Verify system audio settings
+1. **"Configuration validation failed"**
+   - Check that your `.env` file exists and contains valid API keys
+   - Ensure both `OPENAI_API_KEY` and `ELEVENLABS_API_KEY` are set
+   - Copy `env.example` to `.env` and update with your keys
 
-2. **Whisper model download issues**
-   - Ensure stable internet connection
-   - The model downloads automatically on first use
-   - Check available disk space (models can be 1GB+)
+2. **"Authentication failed"**
+   - Check if the API key is correct
+   - Ensure the API key has sufficient credits
 
-3. **FFmpeg not found error**
-   ```bash
-   # macOS
-   brew install ffmpeg
-   
-   # Ubuntu/Debian
-   sudo apt-get install ffmpeg
-   
-   # Windows
-   # Download from https://ffmpeg.org/download.html
-   ```
+3. **"Rate limit exceeded"**
+   - Wait a moment and try again
+   - Consider upgrading your OpenAI plan
 
-4. **PyAudio installation issues (Windows)**
-   ```bash
-   pip install pipwin
-   pipwin install pyaudio
-   ```
+4. **"Module not found" errors**
+   - Run `pip install -r requirements.txt`
+   - Ensure you're using Python 3.7+
 
-5. **PyAudio installation issues (macOS)**
-   ```bash
-   brew install portaudio
-   pip install pyaudio
-   ```
+5. **Permission errors when saving files**
+   - Check write permissions in the current directory
+   - Try running from a different location
 
-### Performance Tips
+### Getting Help
 
-- Use a quiet environment for better transcription accuracy
-- Speak clearly and at a normal pace
-- Keep the microphone close to your mouth
-- Higher sample rates provide better quality but use more resources
-- The "small" model provides good balance of accuracy and speed
+If you encounter issues:
+1. Check the `chat_agent.log` file for detailed error messages
+2. Verify your internet connection
+3. Ensure your API keys are valid and have credits
+4. Check that all environment variables are properly set
 
-## 🎯 Next Steps
+## Security Notes
 
-This MVP provides the foundation for a voice-to-voice AI assistant. Future enhancements could include:
+- API keys are now stored in environment variables (`.env` file)
+- Never commit your `.env` file to version control
+- The `.env` file is already in `.gitignore`
+- Consider using `.env` files for sensitive data in production
 
-- **Text-to-Speech**: Convert AI responses back to speech
-- **AI Integration**: Connect to language models for intelligent responses
-- **Real-time Processing**: Stream audio for continuous conversation
-- **Voice Activity Detection**: Automatic start/stop recording
-- **Audio Visualization**: Real-time audio waveform display
-- **Advanced Audio Processing**: Noise cancellation, echo removal
-- **Multi-user Support**: Handle multiple simultaneous users
-- **API Integration**: RESTful API for external applications
+## License
 
-## 🧪 Testing
+This project is open source and available under the MIT License.
 
-Run the setup verification script to ensure everything is working:
+## Contributing
 
-```bash
-python test_setup.py
-```
-
-This will test:
-- Package imports
-- Whisper model loading
-- Audio device detection
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🙏 Acknowledgments
-
-- OpenAI for the Whisper model
-- Streamlit for the web framework
-- The open-source community for audio processing libraries
-- Contributors and users of this project
-
-## 📊 Performance Metrics
-
-- **Transcription Accuracy**: Improved with audio preprocessing
-- **Processing Speed**: Optimized with modular architecture
-- **Memory Usage**: Efficient with proper cleanup
-- **User Experience**: Enhanced with better error handling and feedback 
+Feel free to submit issues, feature requests, or pull requests to improve the chat agent! 
