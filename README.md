@@ -1,8 +1,27 @@
-# Text Chat Agent
+# Crisis Guide (Your Trusted Guide in any Emergency or Crisis Situation)
 
 A simple and powerful command-line chat agent built with Python and OpenAI API. This agent can have natural conversations with users, maintain conversation history, and save/load conversations.
 
 ## Features
+
+### Emergency Call System USING TWILLIO
+- 🚨 **Real Emergency Calls**: Uses Twilio to make actual phone calls
+- 🧠 **LLM-Driven Response**: AI dynamically assesses situations and determines appropriate actions
+- 📞 **Intelligent Escalation**: Context-aware escalation based on user responsiveness
+- 🔗 **ACI.dev Integration**: Enhanced logging and notifications
+- 📊 **Call Status Monitoring**: Real-time call progress tracking
+- 📝 **Compliance Logging**: Complete audit trail for emergency calls
+- 🛡️ **Safety Features**: Permission-based emergency calls with user confirmation
+
+### Voice Chat Agent
+- 🎤 **Real-time Speech-to-Text**: Uses Google Whisper for accurate transcription
+- 🔊 **High-quality Text-to-Speech**: Uses ElevenLabs for natural voice synthesis
+- 🌐 **WebRTC Audio Streaming**: Real-time audio capture and playback
+- 📱 **Modern Web Interface**: Beautiful, responsive voice chat interface
+- 🎛️ **Volume Control**: Adjustable audio playback volume
+- 📊 **Status Indicators**: Real-time processing status and feedback
+- 🔄 **Dual Input Modes**: Voice recording or text input
+
 
 ### Text Chat Agent
 - 🤖 **AI-Powered Conversations**: Uses OpenAI's GPT-4o for natural language processing
@@ -13,14 +32,8 @@ A simple and powerful command-line chat agent built with Python and OpenAI API. 
 - 📝 **Logging**: Comprehensive logging for debugging and monitoring
 - ⚡ **Real-time Responses**: Get instant responses from the AI assistant
 
-### Voice Chat Agent (NEW!)
-- 🎤 **Real-time Speech-to-Text**: Uses Google Whisper for accurate transcription
-- 🔊 **High-quality Text-to-Speech**: Uses ElevenLabs for natural voice synthesis
-- 🌐 **WebRTC Audio Streaming**: Real-time audio capture and playback
-- 📱 **Modern Web Interface**: Beautiful, responsive voice chat interface
-- 🎛️ **Volume Control**: Adjustable audio playback volume
-- 📊 **Status Indicators**: Real-time processing status and feedback
-- 🔄 **Dual Input Modes**: Voice recording or text input
+
+
 
 ## Installation
 
@@ -68,7 +81,7 @@ OPENAI_TEMPERATURE=0.7
 
 # ElevenLabs Configuration
 ELEVENLABS_API_KEY=your_elevenlabs_key_here
-ELEVENLABS_VOICE_ID=21m00Tcm4TlvDq8ikWAM
+ELEVENLABS_VOICE_ID=21m00Tcm4TlvDq8ikWAM (AI Personality)
 ELEVENLABS_BASE_URL=https://api.elevenlabs.io/v1
 
 # Whisper Configuration
@@ -83,12 +96,63 @@ WEB_UI_PORT=8001
 EMERGENCY_ESCALATION_DELAY=5
 MAX_SILENCE_COUNT=3
 PROACTIVE_CHECK_INTERVAL=2
+
+# Twilio Configuration (for emergency calls)
+EMERGENCY_CALL_ENABLED=true
+TWILIO_ACCOUNT_SID=your_twilio_account_sid_here
+TWILIO_AUTH_TOKEN=your_twilio_auth_token_here
+TWILIO_PHONE_NUMBER=your_twilio_phone_number_here
+EMERGENCY_TARGET_PHONE=+1234567890
+
+# ACI.dev Configuration (for enhanced integrations)
+ACI_ENABLED=false
+ACI_API_KEY=your_aci_api_key_here
+ACI_LINKED_ACCOUNT_OWNER_ID=your_aci_linked_account_owner_id_here
 ```
 
 ### Required API Keys
 
 1. **OpenAI API Key**: Get from [OpenAI Platform](https://platform.openai.com/)
 2. **ElevenLabs API Key**: Get from [ElevenLabs](https://elevenlabs.io/)
+3. **Twilio Account** (for emergency calls): Get from [Twilio](https://www.twilio.com/)
+4. **ACI.dev Account** (optional): Get from [ACI.dev](https://www.aci.dev/)
+
+## Emergency Call Setup
+
+For emergency calling functionality, see the detailed setup guide: [EMERGENCY_CALL_SETUP.md](EMERGENCY_CALL_SETUP.md)
+
+**Quick Setup:**
+1. Sign up for Twilio and get your credentials
+2. Add Twilio configuration to your `.env` file
+3. Set up webhook URLs in Twilio console
+4. Test with `python test_emergency_call.py`
+
+## LLM-Driven Emergency Response
+
+The system now uses AI to dynamically assess emergency situations and determine the most appropriate response:
+
+### How It Works
+
+1. **Emergency Detection**: The system detects emergency keywords in user input
+2. **LLM Assessment**: The AI analyzes the situation and determines the best course of action
+3. **Dynamic Response**: Responses are generated based on context, not rigid protocols
+4. **Intelligent Escalation**: Escalation occurs based on user responsiveness and situation severity
+5. **Permission-Based Calls**: Emergency services are only called with explicit user permission
+
+### Key Features
+
+- **Context-Aware**: AI considers the specific emergency type and user input
+- **Flexible Protocols**: No rigid step-by-step procedures - AI adapts to the situation
+- **Safety-First**: Always prioritizes immediate safety before gathering details
+- **User Control**: Emergency calls require explicit user confirmation
+- **Intelligent Escalation**: Escalation timing and content adapts to the situation
+
+### Emergency Types Supported
+
+- **Fire Emergencies**: Fire detection, evacuation guidance, location assessment
+- **Medical Emergencies**: Consciousness checks, symptom assessment, medical guidance
+- **Danger/Threat Situations**: Safety assessment, threat evaluation, location confirmation
+- **General Emergencies**: Flexible response for various emergency scenarios
 
 ## Usage
 

@@ -37,6 +37,18 @@ class Config:
     EMERGENCY_ESCALATION_DELAY = int(os.getenv("EMERGENCY_ESCALATION_DELAY", "5"))
     MAX_SILENCE_COUNT = int(os.getenv("MAX_SILENCE_COUNT", "3"))
     PROACTIVE_CHECK_INTERVAL = int(os.getenv("PROACTIVE_CHECK_INTERVAL", "2"))
+
+    # Twilio Configuration
+    TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
+    TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
+    TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")
+    EMERGENCY_CALL_ENABLED = os.getenv("EMERGENCY_CALL_ENABLED", "false").lower() == "true"
+    EMERGENCY_TARGET_PHONE = os.getenv("EMERGENCY_TARGET_PHONE", "+1234567890")  # Your phone number
+
+    # ACI.dev Configuration
+    ACI_API_KEY = os.getenv("ACI_API_KEY")
+    ACI_LINKED_ACCOUNT_OWNER_ID = os.getenv("ACI_LINKED_ACCOUNT_OWNER_ID")
+    ACI_ENABLED = os.getenv("ACI_ENABLED", "false").lower() == "true"
     
     # Logging Configuration
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
@@ -122,6 +134,46 @@ class Config:
         return int(os.getenv("PROACTIVE_CHECK_INTERVAL", cls.PROACTIVE_CHECK_INTERVAL))
     
     @classmethod
+    def get_twilio_account_sid(cls) -> str:
+        """Get the Twilio account SID."""
+        return os.getenv("TWILIO_ACCOUNT_SID", cls.TWILIO_ACCOUNT_SID)
+    
+    @classmethod
+    def get_twilio_auth_token(cls) -> str:
+        """Get the Twilio auth token."""
+        return os.getenv("TWILIO_AUTH_TOKEN", cls.TWILIO_AUTH_TOKEN)
+    
+    @classmethod
+    def get_twilio_phone_number(cls) -> str:
+        """Get the Twilio phone number."""
+        return os.getenv("TWILIO_PHONE_NUMBER", cls.TWILIO_PHONE_NUMBER)
+    
+    @classmethod
+    def get_emergency_call_enabled(cls) -> bool:
+        """Get whether emergency calls are enabled."""
+        return os.getenv("EMERGENCY_CALL_ENABLED", "false").lower() == "true"
+    
+    @classmethod
+    def get_emergency_target_phone(cls) -> str:
+        """Get the target phone number for emergency calls."""
+        return os.getenv("EMERGENCY_TARGET_PHONE", cls.EMERGENCY_TARGET_PHONE)
+    
+    @classmethod
+    def get_aci_api_key(cls) -> str:
+        """Get the ACI.dev API key."""
+        return os.getenv("ACI_API_KEY", cls.ACI_API_KEY)
+    
+    @classmethod
+    def get_aci_linked_account_owner_id(cls) -> str:
+        """Get the ACI.dev linked account owner ID."""
+        return os.getenv("ACI_LINKED_ACCOUNT_OWNER_ID", cls.ACI_LINKED_ACCOUNT_OWNER_ID)
+    
+    @classmethod
+    def get_aci_enabled(cls) -> bool:
+        """Get whether ACI.dev is enabled."""
+        return os.getenv("ACI_ENABLED", "false").lower() == "true"
+    
+    @classmethod
     def setup_conversation_dir(cls):
         """Create the conversations directory if it doesn't exist."""
         if not os.path.exists(cls.CONVERSATION_DIR):
@@ -135,6 +187,21 @@ class Config:
             "OPENAI_API_KEY",
             "ELEVENLABS_API_KEY"
         ]
+        
+        # Add Twilio keys if emergency calls are enabled
+        if cls.get_emergency_call_enabled():
+            required_keys.extend([
+                "TWILIO_ACCOUNT_SID",
+                "TWILIO_AUTH_TOKEN",
+                "TWILIO_PHONE_NUMBER"
+            ])
+        
+        # Add ACI.dev keys if ACI.dev is enabled
+        if cls.get_aci_enabled():
+            required_keys.extend([
+                "ACI_API_KEY",
+                "ACI_LINKED_ACCOUNT_OWNER_ID"
+            ])
         
         missing_keys = []
         for key in required_keys:

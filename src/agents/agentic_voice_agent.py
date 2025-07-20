@@ -26,10 +26,22 @@ from config import Config
 from src.services.openai_service import OpenAIService
 from src.services.elevenlabs_service import ElevenLabsService
 from src.services.whisper_service import WhisperService
+from src.services.emergency_call_service import EmergencyCallService, EmergencyCallData, ACIDevService
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(),  # Console output
+        logging.FileHandler('agentic_voice.log')  # File output
+    ]
+)
 logger = logging.getLogger(__name__)
+
+# Create emergency call logger
+emergency_logger = logging.getLogger('emergency_calls')
+emergency_logger.setLevel(logging.INFO)
 
 class AgenticVoiceConfig:
     """Configuration for agentic voice components."""
@@ -93,151 +105,9 @@ class AgenticConversationState:
         self.help_requested = False
         
     def get_next_step(self) -> dict:
-        """Get the next step in the emergency protocol."""
-        if self.emergency_type == "fire":
-            return self._get_fire_protocol_step()
-        elif self.emergency_type == "medical":
-            return self._get_medical_protocol_step()
-        elif self.emergency_type == "danger":
-            return self._get_danger_protocol_step()
-        else:
-            return self._get_general_emergency_step()
-    
-    def _get_fire_protocol_step(self) -> dict:
-        """Get fire emergency protocol steps."""
-        steps = {
-            1: {
-                "action": "immediate_safety",
-                "message": "I understand there's a fire. First, are you and everyone else safely out of the building?",
-                "confirmation_required": True,
-                "timeout": 10,
-                "escalation": "If you don't respond in 10 seconds, I'll assume you need immediate help and call 911."
-            },
-            2: {
-                "action": "location_confirmation",
-                "message": "Good. Now, what's your exact location? I need your address to send help.",
-                "confirmation_required": True,
-                "timeout": 15,
-                "escalation": "I need your location to send firefighters. Please provide your address."
-            },
-            3: {
-                "action": "fire_details",
-                "message": "Can you tell me: Is the fire contained to one room, or has it spread? Are there any people still inside?",
-                "confirmation_required": True,
-                "timeout": 20,
-                "escalation": "This information is critical for emergency responders."
-            },
-            4: {
-                "action": "call_emergency",
-                "message": "I'm calling 911 now. Stay on the line and follow my instructions.",
-                "confirmation_required": False,
-                "timeout": 5,
-                "escalation": "Emergency services are being contacted."
-            }
-        }
-        return steps.get(self.current_step, {"action": "complete", "message": "Emergency protocol complete."})
-    
-    def _get_medical_protocol_step(self) -> dict:
-        """Get medical emergency protocol steps."""
-        steps = {
-            1: {
-                "action": "consciousness_check",
-                "message": "I understand there's a medical emergency. First, is the person conscious and breathing?",
-                "confirmation_required": True,
-                "timeout": 10,
-                "escalation": "If you don't respond, I'll call 911 immediately."
-            },
-            2: {
-                "action": "symptoms_assessment",
-                "message": "What are the main symptoms? Chest pain, difficulty breathing, bleeding, or something else?",
-                "confirmation_required": True,
-                "timeout": 15,
-                "escalation": "I need to know the symptoms to provide appropriate help."
-            },
-            3: {
-                "action": "location_confirmation",
-                "message": "What's your exact location? I need your address for emergency services.",
-                "confirmation_required": True,
-                "timeout": 15,
-                "escalation": "Location is critical for emergency response."
-            },
-            4: {
-                "action": "call_emergency",
-                "message": "I'm calling 911 now. Stay with the person and follow my instructions.",
-                "confirmation_required": False,
-                "timeout": 5,
-                "escalation": "Emergency services are being contacted."
-            }
-        }
-        return steps.get(self.current_step, {"action": "complete", "message": "Emergency protocol complete."})
-    
-    def _get_danger_protocol_step(self) -> dict:
-        """Get danger/threat protocol steps."""
-        steps = {
-            1: {
-                "action": "immediate_safety",
-                "message": "I understand you feel in danger. Are you in a safe location right now?",
-                "confirmation_required": True,
-                "timeout": 10,
-                "escalation": "If you don't respond, I'll assume you need immediate help."
-            },
-            2: {
-                "action": "threat_assessment",
-                "message": "Can you tell me what's happening? Are you alone, or is someone with you?",
-                "confirmation_required": True,
-                "timeout": 15,
-                "escalation": "I need to understand the situation to help you."
-            },
-            3: {
-                "action": "location_confirmation",
-                "message": "What's your exact location? I need your address to send help if needed.",
-                "confirmation_required": True,
-                "timeout": 15,
-                "escalation": "Location is important for your safety."
-            },
-            4: {
-                "action": "call_emergency",
-                "message": "I'm calling 911 now. Stay on the line and I'll guide you through this.",
-                "confirmation_required": False,
-                "timeout": 5,
-                "escalation": "Emergency services are being contacted."
-            }
-        }
-        return steps.get(self.current_step, {"action": "complete", "message": "Emergency protocol complete."})
-    
-    def _get_general_emergency_step(self) -> dict:
-        """Get general emergency protocol steps."""
-        steps = {
-            1: {
-                "action": "safety_check",
-                "message": "I understand there's an emergency. Are you safe right now?",
-                "confirmation_required": True,
-                "timeout": 10,
-                "escalation": "If you don't respond, I'll call 911 immediately."
-            },
-            2: {
-                "action": "situation_assessment",
-                "message": "Can you tell me what's happening? I need to understand the situation.",
-                "confirmation_required": True,
-                "timeout": 15,
-                "escalation": "I need more information to help you properly."
-            },
-            3: {
-                "action": "location_confirmation",
-                "message": "What's your exact location? I need your address for emergency services.",
-                "confirmation_required": True,
-                "timeout": 15,
-                "escalation": "Location is critical for emergency response."
-            },
-            4: {
-                "action": "call_emergency",
-                "message": "I'm calling 911 now. Stay on the line and follow my instructions.",
-                "confirmation_required": False,
-                "timeout": 5,
-                "escalation": "Emergency services are being contacted."
-            }
-        }
-        return steps.get(self.current_step, {"action": "complete", "message": "Emergency protocol complete."})
+        """Get the next step in the emergency protocol (LLM-driven)."""
+        # This is now handled by LLM decision making
+        return {"action": "llm_driven", "message": "LLM will decide the appropriate response."}
     
     def confirm_step(self):
         """Mark current step as confirmed and move to next."""
@@ -247,11 +117,9 @@ class AgenticConversationState:
         self.confirmation_timeout = 0
         
     def escalate(self):
-        """Increase escalation level and potentially skip steps."""
+        """Increase escalation level for LLM-driven responses."""
         self.escalation_level += 1
-        if self.escalation_level >= 2:
-            # Skip to emergency call
-            self.current_step = 4
+        # LLM will decide the appropriate escalation response
         self.pending_confirmation = False
 
 # Audio processing is now handled by individual services
@@ -263,15 +131,24 @@ class AgenticVoiceAgent:
     """Agentic voice agent that takes complete control of conversations."""
     
     def __init__(self):
-        self.chat_agent = AgenticChatAgent()
+        """Initialize the agentic voice agent."""
+        # Initialize services
         self.openai_service = OpenAIService()
         self.elevenlabs_service = ElevenLabsService()
         self.whisper_service = WhisperService()
-        self.voice_state = AgenticVoiceState()
+        
+        # Initialize emergency call services
+        self.emergency_call_service = EmergencyCallService()
+        self.aci_dev_service = ACIDevService()
+        
+        # Initialize conversation state
         self.conversation_state = AgenticConversationState()
-        self.active_connections: Dict[str, WebSocketServerProtocol] = {}
-        self.proactive_tasks: Dict[str, asyncio.Task] = {}
-        self.escalation_tasks: Dict[str, asyncio.Task] = {}
+        self.voice_state = AgenticVoiceState()
+        
+        # Active connections and tasks
+        self.active_connections = {}
+        self.escalation_tasks = {}
+        self.proactive_tasks = {}
         logger.info("Agentic voice agent initialized with services")
     
     def _detect_emergency(self, text: str) -> tuple[bool, str]:
@@ -281,6 +158,7 @@ class AgenticVoiceAgent:
         # Fire-related keywords
         fire_keywords = ["fire", "burning", "smoke", "flame", "blaze"]
         if any(keyword in text_lower for keyword in fire_keywords):
+            emergency_logger.warning(f"🚨 FIRE EMERGENCY DETECTED: '{text}'")
             return True, "fire"
         
         # Medical emergency keywords
@@ -288,17 +166,20 @@ class AgenticVoiceAgent:
                           "injury", "hurt", "bleeding", "broken", "fracture", "unconscious", 
                           "not breathing", "medical emergency"]
         if any(keyword in text_lower for keyword in medical_keywords):
+            emergency_logger.warning(f"🚨 MEDICAL EMERGENCY DETECTED: '{text}'")
             return True, "medical"
         
         # Danger/threat keywords
         danger_keywords = ["danger", "threat", "someone behind", "following", "attack", "intruder", 
                          "unsafe", "scared", "fear", "help", "emergency", "crisis"]
         if any(keyword in text_lower for keyword in danger_keywords):
+            emergency_logger.warning(f"🚨 DANGER/THREAT DETECTED: '{text}'")
             return True, "danger"
         
         # General emergency keywords
         general_keywords = ["accident", "crash", "collision", "car", "vehicle", "emergency", "help"]
         if any(keyword in text_lower for keyword in general_keywords):
+            emergency_logger.warning(f"🚨 GENERAL EMERGENCY DETECTED: '{text}'")
             return True, "general"
         
         return False, ""
@@ -876,7 +757,21 @@ Generate a single, reassuring message about emergency services being contacted."
             self.voice_state.last_user_response = text
             
             # If in emergency protocol, handle as confirmation/response
-            if self.conversation_state.current_step > 0:
+            if self.conversation_state.current_step > 0 or self.conversation_state.emergency_type:
+                # Check if this is a confirmation for emergency call
+                if self.conversation_state.pending_confirmation and self._is_positive_confirmation(text):
+                    emergency_logger.info("✅ User confirmed emergency call permission")
+                    self.conversation_state.pending_confirmation = False
+                    
+                    # Cancel any pending escalation timer
+                    if client_id in self.escalation_tasks:
+                        self.escalation_tasks[client_id].cancel()
+                    
+                    # Make the actual emergency call
+                    await self._initiate_real_emergency_call(websocket, self.conversation_state.emergency_type)
+                    return
+                
+                # Handle as regular emergency response
                 await self._handle_agentic_emergency_response(websocket, text, self.conversation_state.emergency_type)
                 return
             
@@ -913,50 +808,93 @@ Generate a single, reassuring message about emergency services being contacted."
             }))
 
     async def _handle_agentic_emergency_response(self, websocket: WebSocketServerProtocol, user_input: str, emergency_type: str):
-        """Handle emergency response with step-by-step protocol."""
+        """Handle emergency response with LLM-driven dynamic assessment."""
         
-        # Start emergency protocol if not already started
-        if self.conversation_state.current_step == 0:
-            self.conversation_state.start_emergency_protocol(emergency_type)
-            logger.info(f"Starting {emergency_type} emergency protocol")
+        # Create context for LLM decision making
+        context = f"""
+        EMERGENCY SITUATION:
+        - Type: {emergency_type}
+        - User input: "{user_input}"
+        - Current step: {self.conversation_state.current_step}
+        - Steps completed: {self.conversation_state.steps_completed}
+        - Escalation level: {self.conversation_state.escalation_level}
+        - User responsive: {self.conversation_state.user_responsive}
         
-        # Get current step
-        current_step = self.conversation_state.get_next_step()
+        PREVIOUS INTERACTIONS:
+        - Emergency detected: {self.conversation_state.emergency_type}
+        - Time since emergency start: {self.conversation_state.current_step * 10} seconds (estimated)
+        """
         
-        if current_step["action"] == "complete":
-            # Protocol complete, provide final guidance
-            response = "Emergency protocol complete. Help is on the way. Stay on the line and follow emergency responder instructions."
-            await self._send_response(websocket, response)
-            return
+        # Let LLM decide the appropriate response
+        system_prompt = f"""You are an emergency response AI assistant. Assess the situation and provide the most appropriate response.
+
+EMERGENCY PROTOCOLS:
+- Always prioritize safety first
+- Ask critical questions about immediate safety
+- Assess consciousness, breathing, and location
+- Determine if emergency services need to be called
+- Be direct, clear, and urgent in your responses
+
+DECISION MAKING:
+- If this is the first interaction: Ask about immediate safety
+- If user is unresponsive: Escalate with warnings
+- If safety confirmed: Ask for location and details
+- If emergency call needed: Ask for permission before calling
+- If user confirms call: Proceed with emergency call
+
+ESCALATION RULES:
+- Wait 10 seconds for user response
+- If no response, escalate with more urgent warnings
+- After multiple escalations, suggest emergency call
+- Only call emergency services with user permission
+
+CURRENT CONTEXT:
+{context}
+
+RESPONSE FORMAT:
+- Be direct and clear
+- Ask one critical question at a time
+- If escalation needed, be more urgent
+- If calling emergency services, ask for permission first
+- Do not use markdown formatting
+
+Remember: Your goal is to assess the situation and guide the user to safety while being ready to call emergency services if needed."""
         
-        # Check if user provided confirmation for previous step
-        if self.conversation_state.pending_confirmation:
-            if self._is_positive_confirmation(user_input):
-                self.conversation_state.confirm_step()
-                logger.info(f"Step {self.conversation_state.current_step - 1} confirmed, moving to step {self.conversation_state.current_step}")
-            else:
-                # User didn't confirm, ask again with more urgency
-                response = f"I need you to confirm this. {current_step['message']}"
-                await self._send_response(websocket, response)
-                return
+        # Get LLM response
+        response = await self._get_agentic_response(user_input, system_prompt)
         
-        # Send current step message
-        response = current_step["message"]
+        # Check if LLM decided to call emergency services
+        if "call emergency" in response.lower() or "call 911" in response.lower() or "emergency services" in response.lower():
+            # Ask for permission before making the call
+            if not self.conversation_state.pending_confirmation:
+                response = "I need to call emergency services. Are you ready for me to make the call?"
+                self.conversation_state.pending_confirmation = True
+                self.conversation_state.confirmation_timeout = 5  # Reduced to 5 seconds for demo
+                
+                # Start escalation timer
+                client_id = self._get_client_id(websocket)
+                if client_id in self.escalation_tasks:
+                    self.escalation_tasks[client_id].cancel()
+                
+                self.escalation_tasks[client_id] = asyncio.create_task(
+                    self._escalation_timer(websocket, client_id, "If you don't respond, I will call emergency services.")
+                )
+        else:
+            # For regular emergency responses, set up escalation timer if asking a question
+            if "?" in response and not self.conversation_state.pending_confirmation:
+                self.conversation_state.pending_confirmation = True
+                self.conversation_state.confirmation_timeout = 5  # Reduced to 5 seconds for demo
+                
+                # Start escalation timer
+                client_id = self._get_client_id(websocket)
+                if client_id in self.escalation_tasks:
+                    self.escalation_tasks[client_id].cancel()
+                
+                self.escalation_tasks[client_id] = asyncio.create_task(
+                    self._escalation_timer(websocket, client_id, "If you don't respond, I will escalate this emergency.")
+                )
+        
         await self._send_response(websocket, response)
-        
-        # Set up confirmation timeout if required
-        if current_step["confirmation_required"]:
-            self.conversation_state.pending_confirmation = True
-            self.conversation_state.confirmation_timeout = current_step["timeout"]
-            
-            # Start escalation timer
-            client_id = self._get_client_id(websocket)
-            if client_id in self.escalation_tasks:
-                self.escalation_tasks[client_id].cancel()
-            
-            self.escalation_tasks[client_id] = asyncio.create_task(
-                self._escalation_timer(websocket, client_id, current_step["escalation"])
-            )
     
     def _is_positive_confirmation(self, user_input: str) -> bool:
         """Check if user input is a positive confirmation."""
@@ -967,34 +905,190 @@ Generate a single, reassuring message about emergency services being contacted."
     async def _escalation_timer(self, websocket: WebSocketServerProtocol, client_id: str, escalation_message: str):
         """Timer for escalation when user doesn't respond."""
         try:
+            emergency_logger.info(f"⏰ ESCALATION TIMER STARTED - Timeout: {self.conversation_state.confirmation_timeout} seconds")
             await asyncio.sleep(self.conversation_state.confirmation_timeout)
             
             # If still pending confirmation, escalate
             if self.conversation_state.pending_confirmation:
-                logger.warning(f"Escalating for client {client_id} - no confirmation received")
+                emergency_logger.warning(f"🚨 ESCALATING for client {client_id} - no confirmation received after {self.conversation_state.confirmation_timeout} seconds")
                 self.conversation_state.escalate()
                 
-                response = escalation_message
+                # Let LLM decide the escalation response
+                escalation_context = f"""
+                ESCALATION SITUATION:
+                - User has not responded to previous question
+                - Escalation level: {self.conversation_state.escalation_level}
+                - Emergency type: {self.conversation_state.emergency_type}
+                - Time elapsed: {self.conversation_state.confirmation_timeout} seconds
+                
+                ESCALATION RULES:
+                - Be more urgent and direct
+                - If first escalation: Ask again with more urgency
+                - If second escalation: Warn about calling emergency services
+                - If third escalation: Ask for permission to call emergency services
+                - Only call emergency services with explicit permission
+                """
+                
+                escalation_prompt = f"""You are an emergency response AI assistant. The user has not responded to your previous question. Provide an escalated response.
+
+{escalation_context}
+
+ESCALATION LEVELS:
+- Level 1 (First escalation): Ask again with more urgency - "I need you to respond immediately. Are you safe?"
+- Level 2 (Second escalation): Warn about calling emergency services - "If you don't respond in the next 5 seconds, I will call emergency services."
+- Level 3 (Third escalation): AUTOMATICALLY CALL EMERGENCY SERVICES - "I am calling emergency services now. Stay on the line."
+
+CURRENT ESCALATION LEVEL: {self.conversation_state.escalation_level}
+
+RESPONSE FORMAT:
+- Be more urgent and direct based on the escalation level
+- Do not use markdown formatting
+- Be specific to the escalation level
+- At Level 3: Inform that you are calling emergency services immediately
+
+Remember: At Level 3, automatically call emergency services without asking for permission."""
+                
+                response = await self._get_agentic_response("", escalation_prompt)
                 await self._send_response(websocket, response)
                 
-                # If escalated to emergency call, simulate the call
-                if self.conversation_state.current_step >= 4:
-                    await self._simulate_emergency_call(websocket)
+                # Set up next escalation timer for all levels
+                if self.conversation_state.escalation_level < 3:
+                    self.conversation_state.pending_confirmation = True
+                    self.conversation_state.confirmation_timeout = 5  # Reduced to 5 seconds for demo
+                    
+                    # Set up another escalation timer
+                    if client_id in self.escalation_tasks:
+                        self.escalation_tasks[client_id].cancel()
+                    
+                    self.escalation_tasks[client_id] = asyncio.create_task(
+                        self._escalation_timer(websocket, client_id, "If you don't respond, I will escalate further.")
+                    )
+                elif self.conversation_state.escalation_level >= 3:
+                    emergency_logger.warning(f"🚨 ESCALATION: User unresponsive, AUTOMATICALLY CALLING EMERGENCY SERVICES")
+                    # AUTOMATICALLY CALL EMERGENCY SERVICES - NO MORE PERMISSION ASKING
+                    await self._initiate_real_emergency_call(websocket, self.conversation_state.emergency_type)
                     
         except asyncio.CancelledError:
             # Timer was cancelled (user responded)
             pass
     
+    async def _initiate_real_emergency_call(self, websocket: WebSocketServerProtocol, emergency_type: str, location: str = "Unknown location"):
+        """Initiate real emergency call using Twilio."""
+        try:
+            emergency_logger.info(f"🚨 INITIATING EMERGENCY CALL - Type: {emergency_type}, Location: {location}")
+            
+            # Create emergency call data
+            emergency_data = EmergencyCallData(
+                emergency_type=emergency_type,
+                location=location,
+                situation=f"Emergency detected: {emergency_type}",
+                user_phone=Config.get_emergency_target_phone()
+            )
+            
+            emergency_logger.info(f"📞 Making call to: {Config.get_emergency_target_phone()}")
+            
+            # Initiate emergency call
+            call_id = await self.emergency_call_service.initiate_emergency_call(emergency_data)
+            
+            if call_id:
+                emergency_logger.info(f"✅ EMERGENCY CALL SUCCESSFUL - Call ID: {call_id}")
+                
+                response = f"🚨 EMERGENCY CALL INITIATED 🚨\n\n"
+                response += f"📞 Calling emergency services...\n"
+                response += f"📍 Location: {location}\n"
+                response += f"🚨 Emergency Type: {emergency_type.upper()}\n"
+                response += f"📱 Call ID: {call_id}\n\n"
+                response += "⏱️ Connecting to emergency services...\n"
+                response += "💬 Stay on the line for guidance.\n"
+                
+                # Log to ACI.dev if enabled
+                if Config.get_aci_enabled():
+                    emergency_logger.info("🔗 Logging to ACI.dev services...")
+                    await self.aci_dev_service.log_emergency_to_notion(emergency_data)
+                    await self.aci_dev_service.send_emergency_sms(emergency_data)
+                
+                await self._send_response(websocket, response)
+                
+                # Monitor call status
+                emergency_logger.info(f"📊 Starting call monitoring for: {call_id}")
+                asyncio.create_task(self._monitor_emergency_call(call_id, websocket))
+                
+            else:
+                emergency_logger.error("❌ FAILED TO INITIATE EMERGENCY CALL")
+                # Fallback to simulation if real call fails
+                await self._simulate_emergency_call(websocket)
+                
+        except Exception as e:
+            emergency_logger.error(f"❌ EMERGENCY CALL ERROR: {str(e)}")
+            logger.error(f"❌ Failed to initiate emergency call: {str(e)}")
+            # Fallback to simulation
+            await self._simulate_emergency_call(websocket)
+    
     async def _simulate_emergency_call(self, websocket: WebSocketServerProtocol):
-        """Simulate calling emergency services."""
-        response = "Calling 911 now. Emergency services are being contacted. Stay on the line."
+        """Simulate calling emergency services (fallback)."""
+        response = "🚨 EMERGENCY CALL SIMULATION 🚨\n\n"
+        response += "📞 Simulating emergency call...\n"
+        response += "📍 Location: Unknown\n"
+        response += "🚨 Emergency Type: General\n\n"
+        response += "⏱️ Connecting to emergency services...\n"
+        response += "💬 Stay on the line for guidance.\n"
         await self._send_response(websocket, response)
         
         # Simulate call delay
         await asyncio.sleep(2)
         
-        response = "911 has been contacted. Emergency responders are on their way. Please stay on the line and follow their instructions when they arrive."
+        response = "✅ Emergency services have been contacted.\n"
+        response += "🚑 Emergency responders are on their way.\n"
+        response += "📱 Please stay on the line and follow their instructions when they arrive."
         await self._send_response(websocket, response)
+    
+    async def _monitor_emergency_call(self, call_id: str, websocket: WebSocketServerProtocol):
+        """Monitor emergency call status and provide updates."""
+        try:
+            emergency_logger.info(f"📊 MONITORING CALL: {call_id}")
+            
+            # Check call status every 5 seconds for up to 2 minutes
+            for i in range(24):  # 24 * 5 seconds = 2 minutes
+                await asyncio.sleep(5)
+                
+                call_details = await self.emergency_call_service.get_call_status(call_id)
+                if call_details:
+                    call_status = call_details.get("status", "unknown")
+                    emergency_logger.info(f"📊 Call {call_id} status: {call_status} (check {i+1}/24)")
+                    
+                    if call_status == "answered":
+                        emergency_logger.info(f"✅ CALL ANSWERED: {call_id}")
+                        response = "✅ Emergency services have answered the call.\n"
+                        response += "🎯 Follow their instructions carefully.\n"
+                        response += "📱 Keep this connection open for additional guidance."
+                        await self._send_response(websocket, response)
+                        break
+                    elif call_status == "failed":
+                        emergency_logger.error(f"❌ CALL FAILED: {call_id}")
+                        response = "❌ Emergency call failed. Trying alternative method...\n"
+                        response += "📞 Attempting to reconnect..."
+                        await self._send_response(websocket, response)
+                        break
+                    elif call_status == "completed":
+                        emergency_logger.info(f"✅ CALL COMPLETED: {call_id}")
+                        response = "✅ Emergency call completed.\n"
+                        response += "📱 Emergency services have been notified."
+                        await self._send_response(websocket, response)
+                        break
+                    elif call_status == "busy":
+                        emergency_logger.warning(f"📞 CALL BUSY: {call_id}")
+                    elif call_status == "no-answer":
+                        emergency_logger.warning(f"📞 NO ANSWER: {call_id}")
+                    elif call_status == "ringing":
+                        emergency_logger.info(f"📞 CALL RINGING: {call_id}")
+                else:
+                    emergency_logger.warning(f"⚠️ Could not get status for call: {call_id}")
+                
+        except Exception as e:
+            emergency_logger.error(f"❌ CALL MONITORING ERROR: {str(e)}")
+            logger.error(f"❌ Error monitoring emergency call: {str(e)}")
+            response = "⚠️ Error monitoring emergency call. Please contact emergency services directly."
+            await self._send_response(websocket, response)
     
     async def _send_response(self, websocket: WebSocketServerProtocol, response: str):
         """Send response to client with both text and audio."""

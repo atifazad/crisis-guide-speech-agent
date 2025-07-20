@@ -8,8 +8,8 @@ import json
 import logging
 from datetime import datetime
 from typing import Optional
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Request
+from fastapi.responses import HTMLResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from pydantic import BaseModel
@@ -19,6 +19,9 @@ from pathlib import Path
 # Add the project root to Python path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
+
+from config import Config
+from src.services.emergency_call_service import EmergencyCallService
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -601,7 +604,86 @@ async def get_agentic_voice_interface():
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""
-    return {"status": "healthy", "service": "agentic-voice-web-ui"}
+    return {"status": "healthy", "timestamp": datetime.now().isoformat()}
+
+# Twilio Webhook Endpoints
+@app.post("/emergency-voice")
+async def emergency_voice_webhook(request: Request):
+    """Twilio webhook for emergency voice calls."""
+    try:
+        from twilio.twiml import VoiceResponse
+        
+        # Create voice response
+        response = VoiceResponse()
+        
+        # Emergency message
+        response.say("This is an emergency call initiated by your AI assistant. "
+                    "Please stay on the line while we connect you to emergency services.")
+        
+        # Add a pause
+        response.pause(length=2)
+        
+        # Emergency message continued
+        response.say("Emergency services have been notified. "
+                    "Please provide your location and describe the emergency situation.")
+        
+        # Record the call for emergency documentation
+        response.record(timeout=30, transcribe=True)
+        
+        return Response(content=str(response), media_type="application/xml")
+        
+    except Exception as e:
+        logger.error(f"Error in emergency voice webhook: {str(e)}")
+        return Response(content="Error processing emergency call", status_code=500)
+
+@app.post("/call-status")
+async def call_status_webhook(request: Request):
+    """Twilio webhook for call status updates."""
+    try:
+        form_data = await request.form()
+        
+        call_sid = form_data.get("CallSid")
+        call_status = form_data.get("CallStatus")
+        call_duration = form_data.get("CallDuration")
+        
+        logger.info(f"Call status update - SID: {call_sid}, Status: {call_status}, Duration: {call_duration}")
+        
+        # Log the call status update
+        status_log = {
+            "timestamp": datetime.now().isoformat(),
+            "call_sid": call_sid,
+            "status": call_status,
+            "duration": call_duration
+        }
+        
+        # Save to log file
+        import json
+        with open("call_status.log", "a") as f:
+            json.dump(status_log, f)
+            f.write("\n")
+        
+        return {"status": "received"}
+        
+    except Exception as e:
+        logger.error(f"Error in call status webhook: {str(e)}")
+        return Response(content="Error processing call status", status_code=500)
+
+@app.get("/emergency-calls")
+async def get_emergency_calls():
+    """Get list of active emergency calls."""
+    try:
+        emergency_service = EmergencyCallService()
+        active_calls = await emergency_service.list_active_calls()
+        
+        calls_data = []
+        for call_id, emergency_data in active_calls.items():
+            calls_data.append(emergency_data.to_dict())
+        
+        return {"active_calls": calls_data, "count": len(calls_data)}
+        
+    except Exception as e:
+        logger.error(f"Error getting emergency calls: {str(e)}")
+        return {"error": str(e)}
 
 if __name__ == "__main__":
     import uvicorn
